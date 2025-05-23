@@ -102,14 +102,14 @@ export default async (fastify: FastifyInstance): Promise<void> => {
     // );
 
     // Construct the payload as per KServe's V1 protocol
-    const payload = {
-      instances: [data],
-    };
+    // const payload = {
+    //   instances: [data],
+    // };
 
     // Send request to the SDXL endpoint with token to mode:predict API-Endpoint
     const response = await axios.post(
       getSDXLEndpoint().sdxlEndpointURL,
-      payload,
+      data,
     );
 
     const { job_id } = response.data;
