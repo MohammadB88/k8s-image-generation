@@ -82,34 +82,15 @@ export default async (fastify: FastifyInstance): Promise<void> => {
       }
     }
 
-    // This is the original code to send the request to the SDXL endpoint
-    // console.log(
-    //   'Sending request to SDXL endpoint:',
-    //   getSDXLEndpoint().sdxlEndpointURL + '/generate',
-    // );
-
-    //  This is the new code to send the request to the SDXL endpoint served with kserve at model:predict
     console.log(
       'Sending request to SDXL endpoint:',
-      getSDXLEndpoint().sdxlEndpointURL,
+      getSDXLEndpoint().sdxlEndpointURL + '/generate',
     );
 
-    // Send request to the SDXL endpoint with token to /generate API-Endpoint
-    // const response = await axios.post(
-    //   getSDXLEndpoint().sdxlEndpointURL +
-    //     `/generate?user_key=${getSDXLEndpoint().sdxlEndpointToken}`,
-    //   data,
-    // );
-
-    // Construct the payload as per KServe's V1 protocol
-    const payload = {
-      instances: [data],
-    };
-
-    // Send request to the SDXL endpoint with token to mode:predict API-Endpoint
     const response = await axios.post(
-      getSDXLEndpoint().sdxlEndpointURL,
-      payload,
+      getSDXLEndpoint().sdxlEndpointURL +
+        `/generate?user_key=${getSDXLEndpoint().sdxlEndpointToken}`,
+      data,
     );
 
     const { job_id } = response.data;
