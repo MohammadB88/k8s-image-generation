@@ -112,8 +112,9 @@ export default async (fastify: FastifyInstance): Promise<void> => {
       payload,
     );
 
-    // Return generated image (or whole data) to client immediately
-    reply.send(response.data);
+    // Log full response for debug
+    console.log('Full response:', response);
+    console.log('Response data:', response.data);
 
     // const { job_id } = response.data;
     // if (!job_id) {
@@ -122,6 +123,7 @@ export default async (fastify: FastifyInstance): Promise<void> => {
     // }
     // jobTracker[parseInt(job_id)] = data;
     // reply.send({ job_id });
+    reply.send({ response.data });
   });
 
 //   // =======================================================

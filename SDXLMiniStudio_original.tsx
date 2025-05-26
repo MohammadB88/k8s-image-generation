@@ -129,8 +129,6 @@ const SDXLMiniStudio: React.FunctionComponent<SDXLMiniStudioProps> = () => {
     event.preventDefault();
     setImagePanelTitle('Sending generation request');
     setDocumentRendererVisible(true);
-    setProgressVisible(false);
-
     Emitter.emit('notification', {
       variant: 'success',
       title: '',
@@ -138,41 +136,123 @@ const SDXLMiniStudio: React.FunctionComponent<SDXLMiniStudioProps> = () => {
     });
 
     axios
-      .post(`${config.backend_api_url}`, generateParameters)
+      .post(`${config.backend_api_url}/generate`, generateParameters)
       .then((response) => {
-        // Assuming the backend returns an image in response.data.image
-        const image = response.data.image;
-        
-        if (!image) {
-        Emitter.emit('notification', {
-          variant: 'warning',
-          title: '',
-          description: 'No image received from backend!',
-        });
-        setDocumentRendererVisible(false);
-        return;
-
+        // Extract the job_id from the response.
+        const { job_id } = response.data;
+        if (!job_id) {
+          Emitter.emit('notification', {
+            variant: 'warning',
+            title: '',
+            description: 'No job_id received from backend!',
+          });
+          return;
         }
 
-        // Update UI with the received image
-        setFileData(image);
-        setFileName('generated_image.png');
+        // Create the WebSocket URL derived from backend API.
+        const wsProtocol = config.backend_api_url.startsWith('https') ? 'wss' : 'ws';
+        const backendHost = config.backend_api_url.replace(/^https?:\/\//, '');
+        const wsUrl = `${wsProtocol}://${backendHost}/generate/progress/${job_id}`;
 
-        setImagePanelTitle('Image generated!');
-        Emitter.emit('notification', {
-          variant: 'success',
-          title: '',
-          description: 'Image generated successfully!',
-        });
-      )} 
+        // Open a WebSocket connection.
+        const ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log('WebSocket connected for job_id:', job_id);
+        };
+
+        ws.onmessage = (messageEvent) => {
+          try {
+            const msg = JSON.parse(messageEvent.data);
+
+            // If this is a queue update, update queue info.
+            if (msg.status && msg.status === 'queued') {
+              if (msg.position === -1) {
+                setImagePanelTitle('Image generation is starting...');
+              } else if (msg.position === 1) {
+                setImagePanelTitle('You are next! (#1 in the queue)');
+              }
+              else {
+                setImagePanelTitle('Currently serving others, you are #' + msg.position + ' in the queue.');
+              }
+              setProgressVisible(false);
+              setFileName('');
+              setFileData('');
+            }
+
+            // If this is a progress update, update UI elements.
+            if (msg.status && msg.status === 'progress') {
+              setImagePanelTitle('The image is being generated...');
+              setProgressVisible(true);
+              if (msg.pipeline && msg.pipeline === 'base') {
+                setPhase('Base');
+                setBaseStep(msg.step + 1);
+              }
+              if (msg.pipeline && msg.pipeline === 'refiner') {
+                setPhase('Refiner');
+                setRefinerStep(msg.step + 1);
+              }
+
+              setFileName('new_image.png');
+              setFileData(msg.image);
+            }
+
+            // If the job is complete, update the image data and close the WebSocket.
+            if (msg.status && msg.status === 'completed') {
+              if (msg.image_failed_check === true ) {
+                setProgressVisible(false);
+                setBaseStep(0);
+                setRefinerStep(0);
+                setImagePanelTitle('Image generation error');
+                Emitter.emit('notification', {
+                  variant: 'warning',
+                  title: '',
+                  description: 'Sorry, the generated image has been classified as sensitive and blocked!',
+                });
+              } else {
+                setProgressVisible(false);
+                setBaseStep(0);
+                setRefinerStep(0);
+                setFileName('new_image.png');
+                setFileData(msg.image);
+                setImagePanelTitle('Image generated in ' + msg.processing_time.toFixed(1) + ' seconds');
+                Emitter.emit('notification', {
+                  variant: 'success',
+                  title: '',
+                  description: msg.description || 'Image generated!',
+                });  
+              }
+
+              ws.close();
+            }
+          } catch (err) {
+            console.error('Error parsing message from WebSocket:', err);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          Emitter.emit('notification', {
+            variant: 'warning',
+            title: '',
+            description: 'WebSocket error occurred.',
+          });
+        };
+
+        ws.onclose = () => {
+          console.log('WebSocket connection closed.');
+        };
+      })
       .catch((error) => {
         setDocumentRendererVisible(false);
         Emitter.emit('notification', {
           variant: 'warning',
           title: '',
           description:
-            'Generation failed: ' +
-            (error.response?.data?.message || error.message),
+            'Connection failed with the error: ' +
+            (error.response && error.response.data && error.response.data.message 
+              ? error.response.data.message
+              : error.message),
         });
       });
   };
@@ -434,19 +514,8 @@ const SDXLMiniStudio: React.FunctionComponent<SDXLMiniStudioProps> = () => {
                     style={{ paddingBottom: '1rem' }}
                   />
                 }
-                {documentRendererVisible && fileData && ( 
-                  <DocumentRenderer 
-                    fileData={fileData} 
-                    fileName={fileName} 
-                    width={generateParameters.width} 
-                    height={generateParameters.height} 
-                    />
-                  )}
-                {!documentRendererVisible && (
-                    <p>
-                      Enter the description of the image to generate in the prompt, adjust the parameters if you want, and click on <b>Generate the image</b>.
-                    </p>
-                  )}
+                {documentRendererVisible && <DocumentRenderer fileData={fileData} fileName={fileName} width={generateParameters.width} height={generateParameters.height} />}
+                {!documentRendererVisible && <p>Enter the description of the image to generate in the prompt, adjust the parameters if you want, and click on <b>Generate the image</b>.</p>}
               </CardBody>
             </Card>
           </FlexItem>
