@@ -125,6 +125,7 @@ export default async (fastify: FastifyInstance): Promise<void> => {
     // reply.send({ job_id });
     reply.send(response.data);
   });
+};
 
 //   // =======================================================
 //   // 2. WebSocket Endpoint: Pipe API updates to the Client
@@ -214,3 +215,4 @@ export default async (fastify: FastifyInstance): Promise<void> => {
 //     });
 //   });
 // };
+// 
