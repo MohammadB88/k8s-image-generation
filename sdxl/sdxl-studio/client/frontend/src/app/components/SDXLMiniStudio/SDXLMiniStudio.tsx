@@ -146,8 +146,8 @@ const SDXLMiniStudio: React.FunctionComponent<SDXLMiniStudioProps> = () => {
       .then((response) => {
 
         // Assuming the backend returns an image in response.data.image
-        const prediction = response.data.predictions.[0];
-        const b64 = prediction.image.b64;
+        const prediction = response.data.predictions?.[0];
+        const b64 = prediction?.image?.b64;
         // const format = prediction.image.format.toLowerCase() || 'png';
         
         if (b64) {
