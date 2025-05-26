@@ -125,6 +125,10 @@ const SDXLMiniStudio: React.FunctionComponent<SDXLMiniStudioProps> = () => {
   const [baseStep, setBaseStep] = React.useState(0);
   const [refinerStep, setRefinerStep] = React.useState(0);
 
+  // State to hold the generated image URL ( b64 format )
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+
   const handleGenerateImage = (event) => {
     event.preventDefault();
     setImagePanelTitle('Sending generation request');
@@ -140,30 +144,59 @@ const SDXLMiniStudio: React.FunctionComponent<SDXLMiniStudioProps> = () => {
     axios
       .post(`${config.backend_api_url}/generate`, generateParameters)
       .then((response) => {
-        // Assuming the backend returns an image in response.data.image
-        const image = response.data.image;
-        
-        if (!image) {
-        Emitter.emit('notification', {
-          variant: 'warning',
-          title: '',
-          description: 'No image received from backend!',
-        });
-        setDocumentRendererVisible(false);
-        return;
 
+        // Assuming the backend returns an image in response.data.image
+        const prediction = response.data.predictions?.[0];
+        const b64 = prediction?.image?.b64;
+        const format = prediction?.image?.format?.toLowerCase() || 'png';
+        
+        if (b64) {
+          const dataUri = `data:image/${format};base64,${b64}`;
+          setImageUrl(dataUri);
+          setFileData(dataUri); // assuming you're using setFileData elsewhere
+          setFileName('generated_image.png');
+          
+          setImagePanelTitle('Image generated!');
+          Emitter.emit('notification', {
+            variant: 'success',
+            title: '',
+            description: 'Image generated successfully!',
+          });
+        
+        } else {
+
+          console.error('No base64 image found in response:', response.data);
+        
+          Emitter.emit('notification', {
+            variant: 'warning',
+            title: '',
+            description: 'No image received from backend!',
+          });
+          setDocumentRendererVisible(false);
         }
 
-        // Update UI with the received image
-        setFileData(image);
-        setFileName('generated_image.png');
+        // const image = response.data.image;
+        
+        // if (!image) {
+        // Emitter.emit('notification', {
+        //   variant: 'warning', 
+        //   title: '',
+        //   description: 'No image received from backend!',
+        // });
+        // setDocumentRendererVisible(false);
+        // return;
+        // }
 
-        setImagePanelTitle('Image generated!');
-        Emitter.emit('notification', {
-          variant: 'success',
-          title: '',
-          description: 'Image generated successfully!',
-        });
+        // Update UI with the received image
+        // setFileData(image);
+        // setFileName('generated_image.png');
+
+        // setImagePanelTitle('Image generated!');
+        // Emitter.emit('notification', {
+        //   variant: 'success',
+        //   title: '',
+        //   description: 'Image generated successfully!',
+        // });
       }) 
       .catch((error) => {
         setDocumentRendererVisible(false);
