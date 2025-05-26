@@ -123,7 +123,7 @@ export default async (fastify: FastifyInstance): Promise<void> => {
     // }
     // jobTracker[parseInt(job_id)] = data;
     // reply.send({ job_id });
-    reply.send({ response.data });
+    reply.send(response.data);
   });
 
 //   // =======================================================
