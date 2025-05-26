@@ -126,7 +126,7 @@ const SDXLMiniStudio: React.FunctionComponent<SDXLMiniStudioProps> = () => {
   const [refinerStep, setRefinerStep] = React.useState(0);
 
   // State to hold the generated image URL ( b64 format )
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  // const [imageUrl, setImageUrl] = React.useState<string | null>(null);
 
 
   const handleGenerateImage = (event) => {
@@ -152,7 +152,7 @@ const SDXLMiniStudio: React.FunctionComponent<SDXLMiniStudioProps> = () => {
         
         if (b64) {
           const dataUri = `data:image/${format};base64,${b64}`;
-          setImageUrl(dataUri);
+          // setImageUrl(dataUri);
           setFileData(dataUri); // assuming you're using setFileData elsewhere
           setFileName('generated_image.png');
           
