@@ -146,22 +146,14 @@ const SDXLMiniStudio: React.FunctionComponent<SDXLMiniStudioProps> = () => {
       .then((response) => {
 
         // Assuming the backend returns an image in response.data.image
-        const prediction = response.data.predictions?.[0];
-        // Log Prediction for debug
-        console.log('Prediction:', prediction); 
-
-        const b64 = prediction?.image?.b64;
-        // Log b64 for debug
-        console.log('b64:', b64);
-
-        const format = prediction?.image?.format?.toLowerCase() || 'png';
-        // Log format for debug
-        console.log('format:', format);
+        const prediction = response.data.predictions.[0];
+        const b64 = prediction.image.b64;
+        // const format = prediction.image.format.toLowerCase() || 'png';
         
         if (b64) {
-          const dataUri = `data:image/${format};base64,${b64}`;
+          // const dataUri = `data:image/${format};base64,${b64}`;
           // setImageUrl(dataUri);
-          setFileData(dataUri); // assuming you're using setFileData elsewhere
+          setFileData(b64); // assuming you're using setFileData elsewhere
           setFileName('generated_image.png');
           
           setImagePanelTitle('Image generated!');
