@@ -164,7 +164,7 @@ const SDXLMiniStudio: React.FunctionComponent<SDXLMiniStudioProps> = () => {
           title: '',
           description: 'Image generated successfully!',
         });
-      )} 
+      }) 
       .catch((error) => {
         setDocumentRendererVisible(false);
         Emitter.emit('notification', {
