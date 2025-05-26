@@ -115,6 +115,7 @@ export default async (fastify: FastifyInstance): Promise<void> => {
     // Log full response for debug
     console.log('Full response:', response);
     console.log('Response data:', response.data);
+    console.log('Image field:', response.data.predictions[0].image);
 
     // const { job_id } = response.data;
     // if (!job_id) {
