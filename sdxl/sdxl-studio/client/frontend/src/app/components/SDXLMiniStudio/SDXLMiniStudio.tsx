@@ -138,7 +138,7 @@ const SDXLMiniStudio: React.FunctionComponent<SDXLMiniStudioProps> = () => {
     });
 
     axios
-      .post(`${config.backend_api_url}`, generateParameters)
+      .post(`${config.backend_api_url}/generate`, generateParameters)
       .then((response) => {
         // Assuming the backend returns an image in response.data.image
         const image = response.data.image;
